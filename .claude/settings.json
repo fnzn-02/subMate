@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.netflix.com)",
+      "WebFetch(domain:www.spotify.com)",
+      "WebFetch(domain:one.google.com)",
+      "WebFetch(domain:www.melon.com)",
+      "WebFetch(domain:www.wavve.com)",
+      "WebFetch(domain:membership.naver.com)",
+      "WebFetch(domain:chatgpt.com)",
+      "WebFetch(domain:claude.ai)",
+      "WebFetch(domain:www.tving.com)",
+      "WebFetch(domain:benefitshub.co.kr)",
+      "WebFetch(domain:www.google.com)",
+      "WebFetch(domain:inforble.com)",
+      "WebFetch(domain:help.watcha.com)"
+    ]
+  }
+}

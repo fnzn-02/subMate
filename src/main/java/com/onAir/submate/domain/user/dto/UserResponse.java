@@ -11,6 +11,8 @@ public record UserResponse(
         String nickname,
         String profileImageUrl,
         ThemeMode themeMode,
+        String job,
+        String hobby,
         LocalDateTime createdAt
 ) {
     public static UserResponse from(User user) {
@@ -20,6 +22,8 @@ public record UserResponse(
                 user.getNickname(),
                 user.getProfileImageUrl(),
                 user.getThemeMode(),
+                user.getJob(),
+                user.getHobby(),
                 user.getCreatedAt()
         );
     }

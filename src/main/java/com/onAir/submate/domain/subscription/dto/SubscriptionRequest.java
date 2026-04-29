@@ -24,8 +24,12 @@ public record SubscriptionRequest(
         @NotNull(message = "다음 결제일을 입력해주세요.")
         LocalDate nextPaymentDate,
 
-        boolean isFreeTrial,
+        @com.fasterxml.jackson.annotation.JsonProperty("isFreeTrial") boolean isFreeTrial,
 
         @NotNull(message = "카테고리를 선택해주세요.")
-        Category category
+        Category category,
+
+        String paymentMethod,
+
+        @com.fasterxml.jackson.annotation.JsonProperty("isDollar") boolean isDollar  // 달러 결제 여부 (true면 price가 달러 금액)
 ) {}

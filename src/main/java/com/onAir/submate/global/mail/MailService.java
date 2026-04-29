@@ -1,104 +1,171 @@
 package com.onAir.submate.global.mail;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
-import jakarta.mail.internet.MimeMessage;
-import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MailService {
 
-    private final JavaMailSender mailSender;
+    private final RestClient brevoRestClient;
 
-    @Value("${spring.mail.username}")
-    private String from;
+    @Value("${brevo.api-key}")
+    private String apiKey;
 
-    @Async
-    public void sendVerificationCode(String to, String code) {
-        String subject = "[subMate] 이메일 인증 코드";
-        String html = """
-            <div style="font-family:'Apple SD Gothic Neo',sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f8f9ff;border-radius:16px;">
-              <div style="text-align:center;margin-bottom:24px;">
-                <div style="display:inline-block;width:48px;height:48px;background:linear-gradient(135deg,#6366f1,#9333ea);border-radius:12px;line-height:48px;color:white;font-size:24px;">✓</div>
-                <h1 style="color:#1f2937;font-size:22px;margin:12px 0 4px;">이메일 인증</h1>
-                <p style="color:#6b7280;font-size:14px;margin:0;">subMate 회원가입을 완료해주세요</p>
-              </div>
-              <div style="background:white;border-radius:12px;padding:24px;text-align:center;border:1px solid #e5e7eb;">
-                <p style="color:#6b7280;font-size:14px;margin:0 0 12px;">인증 코드</p>
-                <div style="font-size:36px;font-weight:800;letter-spacing:8px;color:#6366f1;">%s</div>
-                <p style="color:#9ca3af;font-size:12px;margin:12px 0 0;">10분 내에 입력해주세요</p>
-              </div>
-              <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:16px;">본인이 요청하지 않은 경우 이 메일을 무시하세요.</p>
-            </div>
-            """.formatted(code);
-        send(to, subject, html);
+    @Value("${brevo.sender-email}")
+    private String senderEmail;
+
+    public MailService() {
+        this.brevoRestClient = RestClient.builder()
+                .baseUrl("https://api.brevo.com/v3")
+                .build();
     }
 
-    @Async
-    public void sendPasswordResetCode(String to, String code) {
-        String subject = "[subMate] 비밀번호 재설정 코드";
-        String html = """
-            <div style="font-family:'Apple SD Gothic Neo',sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f8f9ff;border-radius:16px;">
-              <div style="text-align:center;margin-bottom:24px;">
-                <div style="display:inline-block;width:48px;height:48px;background:linear-gradient(135deg,#f97316,#ec4899);border-radius:12px;line-height:48px;color:white;font-size:24px;">🔑</div>
-                <h1 style="color:#1f2937;font-size:22px;margin:12px 0 4px;">비밀번호 재설정</h1>
-                <p style="color:#6b7280;font-size:14px;margin:0;">아래 코드로 비밀번호를 재설정하세요</p>
-              </div>
-              <div style="background:white;border-radius:12px;padding:24px;text-align:center;border:1px solid #e5e7eb;">
-                <p style="color:#6b7280;font-size:14px;margin:0 0 12px;">재설정 코드</p>
-                <div style="font-size:36px;font-weight:800;letter-spacing:8px;color:#f97316;">%s</div>
-                <p style="color:#9ca3af;font-size:12px;margin:12px 0 0;">10분 내에 입력해주세요</p>
-              </div>
-              <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:16px;">본인이 요청하지 않은 경우 즉시 비밀번호를 변경하세요.</p>
-            </div>
-            """.formatted(code);
-        send(to, subject, html);
+    public void sendVerificationCode(String toEmail, String code) {
+        send(toEmail, "[SubMate] 이메일 인증 코드", buildEmailHtml(
+                "이메일 인증",
+                "아래 인증 코드를 앱에 입력해주세요.",
+                code,
+                "이 코드는 10분간 유효합니다. 본인이 요청하지 않았다면 이 메일을 무시하세요."
+        ));
     }
 
-    @Async
-    public void sendPaymentReminder(String to, String nickname, String serviceName,
-                                    LocalDate paymentDate, int daysLeft) {
-        String dLabel = daysLeft == 0 ? "오늘" : daysLeft + "일 후";
-        String subject = "[subMate] %s 결제 %s 예정".formatted(serviceName, dLabel);
-        String html = """
-            <div style="font-family:'Apple SD Gothic Neo',sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f8f9ff;border-radius:16px;">
-              <div style="text-align:center;margin-bottom:24px;">
-                <div style="display:inline-block;width:48px;height:48px;background:linear-gradient(135deg,#6366f1,#9333ea);border-radius:12px;line-height:48px;color:white;font-size:24px;">💳</div>
-                <h1 style="color:#1f2937;font-size:22px;margin:12px 0 4px;">결제 임박 알림</h1>
-                <p style="color:#6b7280;font-size:14px;margin:0;">%s님의 구독 결제가 곧 예정되어 있어요</p>
-              </div>
-              <div style="background:white;border-radius:12px;padding:24px;border:1px solid #e5e7eb;">
-                <table style="width:100%%;border-collapse:collapse;">
-                  <tr><td style="padding:8px 0;color:#6b7280;font-size:14px;">서비스</td><td style="text-align:right;font-weight:700;color:#1f2937;">%s</td></tr>
-                  <tr><td style="padding:8px 0;color:#6b7280;font-size:14px;">결제일</td><td style="text-align:right;font-weight:700;color:#1f2937;">%s</td></tr>
-                  <tr><td style="padding:8px 0;color:#6b7280;font-size:14px;">D-Day</td><td style="text-align:right;font-weight:700;color:#6366f1;">%s</td></tr>
-                </table>
-              </div>
-              <p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:16px;">subMate에서 구독을 관리하세요</p>
-            </div>
-            """.formatted(nickname, serviceName, paymentDate.toString(), dLabel);
-        send(to, subject, html);
+    public void sendPasswordResetCode(String toEmail, String code) {
+        send(toEmail, "[SubMate] 비밀번호 재설정 코드", buildEmailHtml(
+                "비밀번호 재설정",
+                "아래 인증 코드를 앱에 입력해주세요.",
+                code,
+                "이 코드는 10분간 유효합니다. 본인이 요청하지 않았다면 즉시 비밀번호를 변경하세요."
+        ));
     }
 
-    private void send(String to, String subject, String html) {
+    public void sendPaymentReminder(String toEmail, String serviceName, int amount, String paymentDate, int daysLeft) {
+        String subject = daysLeft == 1
+                ? "[SubMate] 내일 결제 예정 - " + serviceName
+                : "[SubMate] " + daysLeft + "일 후 결제 예정 - " + serviceName;
+
+        String title = daysLeft == 1 ? "내일 결제됩니다" : daysLeft + "일 후 결제됩니다";
+        String subtitle = String.format("%s 구독료 %,d원이 %s에 결제될 예정입니다.", serviceName, amount, paymentDate);
+        String tip = daysLeft == 3
+                ? "해지를 원하신다면 지금 바로 처리하세요."
+                : "마지막 알림입니다. 필요하지 않다면 오늘 안에 해지하세요.";
+
+        send(toEmail, subject, buildReminderHtml(title, subtitle, serviceName, amount, paymentDate, tip));
+    }
+
+    private String buildReminderHtml(String title, String subtitle, String serviceName,
+                                     int amount, String paymentDate, String tip) {
+        return """
+                <!DOCTYPE html>
+                <html lang="ko">
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+                <body style="margin:0;padding:0;background:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="background:#F1F5F9;padding:40px 0;">
+                    <tr><td align="center">
+                      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+                        <tr>
+                          <td style="background:linear-gradient(135deg,#6366F1 0%%,#8B5CF6 100%%);padding:36px 40px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">SubMate</div>
+                            <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;">구독 관리의 모든 것</div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding:40px 40px 32px;">
+                            <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0F172A;">%s</h1>
+                            <p style="margin:0 0 32px;font-size:15px;color:#64748B;line-height:1.6;">%s</p>
+                            <div style="background:#F8FAFC;border:2px solid #E2E8F0;border-radius:12px;padding:24px;margin-bottom:24px;">
+                              <div style="font-size:13px;color:#94A3B8;margin-bottom:4px;">서비스</div>
+                              <div style="font-size:18px;font-weight:700;color:#0F172A;margin-bottom:16px;">%s</div>
+                              <div style="font-size:13px;color:#94A3B8;margin-bottom:4px;">결제 금액</div>
+                              <div style="font-size:28px;font-weight:800;color:#6366F1;margin-bottom:16px;">%,d원</div>
+                              <div style="font-size:13px;color:#94A3B8;margin-bottom:4px;">결제 예정일</div>
+                              <div style="font-size:16px;font-weight:600;color:#0F172A;">%s</div>
+                            </div>
+                            <p style="margin:0;font-size:13px;color:#94A3B8;line-height:1.6;text-align:center;">%s</p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding:20px 40px 32px;border-top:1px solid #F1F5F9;text-align:center;">
+                            <p style="margin:0;font-size:12px;color:#CBD5E1;">© 2025 SubMate. All rights reserved.</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td></tr>
+                  </table>
+                </body>
+                </html>
+                """.formatted(title, subtitle, serviceName, amount, paymentDate, tip);
+    }
+
+    private String buildEmailHtml(String title, String subtitle, String code, String footer) {
+        return """
+                <!DOCTYPE html>
+                <html lang="ko">
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+                <body style="margin:0;padding:0;background:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+                  <table width="100%%" cellpadding="0" cellspacing="0" style="background:#F1F5F9;padding:40px 0;">
+                    <tr><td align="center">
+                      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+                        <!-- 헤더 -->
+                        <tr>
+                          <td style="background:linear-gradient(135deg,#6366F1 0%%,#8B5CF6 100%%);padding:36px 40px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">SubMate</div>
+                            <div style="font-size:13px;color:rgba(255,255,255,0.75);margin-top:4px;">구독 관리의 모든 것</div>
+                          </td>
+                        </tr>
+                        <!-- 본문 -->
+                        <tr>
+                          <td style="padding:40px 40px 32px;">
+                            <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#0F172A;">%s</h1>
+                            <p style="margin:0 0 32px;font-size:15px;color:#64748B;line-height:1.6;">%s</p>
+                            <!-- 코드 박스 -->
+                            <div style="background:#F8FAFC;border:2px solid #E2E8F0;border-radius:12px;padding:28px;text-align:center;margin-bottom:32px;">
+                              <div style="font-size:11px;font-weight:600;color:#94A3B8;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">인증 코드</div>
+                              <div style="font-size:40px;font-weight:800;color:#6366F1;letter-spacing:12px;">%s</div>
+                            </div>
+                            <p style="margin:0;font-size:13px;color:#94A3B8;line-height:1.6;text-align:center;">%s</p>
+                          </td>
+                        </tr>
+                        <!-- 푸터 -->
+                        <tr>
+                          <td style="padding:20px 40px 32px;border-top:1px solid #F1F5F9;text-align:center;">
+                            <p style="margin:0;font-size:12px;color:#CBD5E1;">© 2025 SubMate. All rights reserved.</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td></tr>
+                  </table>
+                </body>
+                </html>
+                """.formatted(title, subtitle, code, footer);
+    }
+
+    private void send(String toEmail, String subject, String htmlContent) {
         try {
-            MimeMessage msg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
-            helper.setFrom(from);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-            mailSender.send(msg);
+            Map<String, Object> body = Map.of(
+                    "sender", Map.of("name", "SubMate", "email", senderEmail),
+                    "to", List.of(Map.of("email", toEmail)),
+                    "subject", subject,
+                    "htmlContent", htmlContent
+            );
+
+            brevoRestClient.post()
+                    .uri("/smtp/email")
+                    .header("api-key", apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+
+            log.info("이메일 발송 성공: {}", toEmail);
         } catch (Exception e) {
-            log.error("메일 발송 실패 - to: {}, subject: {}", to, subject, e);
+            log.error("이메일 발송 실패: {} - {}", toEmail, e.getMessage());
         }
     }
 }

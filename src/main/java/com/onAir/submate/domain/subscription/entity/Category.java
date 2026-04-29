@@ -7,7 +7,7 @@ public enum Category {
     GAME,
     CLOUD,
     EDUCATION,
-    NEWS,
-    FITNESS,
+    SHOPPING,
+    DELIVERY,
     OTHER
 }

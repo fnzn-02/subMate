@@ -14,6 +14,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,15 +22,16 @@ import org.springframework.web.bind.annotation.*;
 import java.security.SecureRandom;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
-    private final MailService mailService;
     private final EmailVerificationStore verificationStore;
     private final PasswordResetService passwordResetService;
+    private final MailService mailService;
     private final SecureRandom random = new SecureRandom();
 
     // ── 회원가입 / 로그인 ──────────────────────────────
@@ -44,7 +46,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
-    // ── 이메일 인증 코드 발송 ─────────────────────────
+    // ── 이메일 인증 코드 발송 (TODO: FCM 푸시 알림으로 교체 예정)
     @PostMapping("/email/send-code")
     public ResponseEntity<Void> sendEmailCode(@RequestBody Map<String, String> body) {
         String email = body.get("email");
@@ -54,6 +56,7 @@ public class AuthController {
         String code = String.format("%06d", random.nextInt(1_000_000));
         verificationStore.save(email, code);
         mailService.sendVerificationCode(email, code);
+        log.info("이메일 인증 코드 발급 - email: {}, code: {}", email, code);
         return ResponseEntity.ok().build();
     }
 

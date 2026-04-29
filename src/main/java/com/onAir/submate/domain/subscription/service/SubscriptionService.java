@@ -1,6 +1,9 @@
 package com.onAir.submate.domain.subscription.service;
 
+import com.onAir.submate.domain.exchange.service.ExchangeRateService;
 import com.onAir.submate.domain.subscription.dto.SubscriptionRequest;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import com.onAir.submate.domain.subscription.dto.SubscriptionResponse;
 import com.onAir.submate.domain.subscription.entity.Subscription;
 import com.onAir.submate.domain.subscription.repository.SubscriptionRepository;
@@ -20,19 +23,29 @@ public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
+    private final ExchangeRateService exchangeRateService;
 
     @Transactional
     public SubscriptionResponse create(Long userId, SubscriptionRequest request) {
         User user = getUser(userId);
 
+        // 달러 결제면 환율 적용해서 원화로 변환 후 저장
+        BigDecimal price = request.isDollar()
+                ? exchangeRateService.convertUsdToKrw(request.price())
+                        .setScale(0, RoundingMode.HALF_UP)
+                : request.price();
+
         Subscription subscription = Subscription.builder()
                 .user(user)
                 .serviceName(request.serviceName())
-                .price(request.price())
+                .price(price)
+                .originalPrice(request.isDollar() ? request.price() : null)
                 .paymentCycle(request.paymentCycle())
                 .nextPaymentDate(request.nextPaymentDate())
                 .isFreeTrial(request.isFreeTrial())
+                .isDollar(request.isDollar())
                 .category(request.category())
+                .paymentMethod(request.paymentMethod())
                 .build();
 
         // 추가 순서 기반 sort_order 자동 부여
@@ -40,7 +53,7 @@ public class SubscriptionService {
                    + subscriptionRepository.countByUserAndIsFreeTrial(user, true);
         subscription.updateSortOrder((int) count + 1);
 
-        return SubscriptionResponse.from(subscriptionRepository.save(subscription));
+        return SubscriptionResponse.from(subscriptionRepository.save(subscription), exchangeRateService);
     }
 
     @Transactional(readOnly = true)
@@ -48,7 +61,7 @@ public class SubscriptionService {
         User user = getUser(userId);
         return subscriptionRepository.findByUserOrderBySortOrderAscCreatedAtAsc(user)
                 .stream()
-                .map(SubscriptionResponse::from)
+                .map(s -> SubscriptionResponse.from(s, exchangeRateService))
                 .toList();
     }
 
@@ -56,16 +69,24 @@ public class SubscriptionService {
     public SubscriptionResponse update(Long userId, Long subscriptionId, SubscriptionRequest request) {
         Subscription subscription = getSubscriptionWithOwnerCheck(userId, subscriptionId);
 
+        BigDecimal updatedPrice = request.isDollar()
+                ? exchangeRateService.convertUsdToKrw(request.price())
+                        .setScale(0, RoundingMode.HALF_UP)
+                : request.price();
+
         subscription.update(
                 request.serviceName(),
-                request.price(),
+                updatedPrice,
+                request.isDollar() ? request.price() : null,
                 request.paymentCycle(),
                 request.nextPaymentDate(),
                 request.isFreeTrial(),
-                request.category()
+                request.isDollar(),
+                request.category(),
+                request.paymentMethod()
         );
 
-        return SubscriptionResponse.from(subscription);
+        return SubscriptionResponse.from(subscription, exchangeRateService);
     }
 
     @Transactional

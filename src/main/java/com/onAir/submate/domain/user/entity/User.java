@@ -35,6 +35,15 @@ public class User {
     @Column(name = "theme_mode", nullable = false, length = 10)
     private ThemeMode themeMode = ThemeMode.LIGHT;
 
+    @Column(name = "fcm_token")
+    private String fcmToken;
+
+    @Column(length = 50)
+    private String job;
+
+    @Column(length = 100)
+    private String hobby;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -65,5 +74,14 @@ public class User {
 
     public void updateThemeMode(ThemeMode themeMode) {
         this.themeMode = themeMode;
+    }
+
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
+
+    public void updateProfile(String job, String hobby) {
+        this.job = job;
+        this.hobby = hobby;
     }
 }

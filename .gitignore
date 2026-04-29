@@ -38,6 +38,8 @@ out/
 
 application-local.yml
 application-prod.yml
+firebase-service-account.json
+.DS_Store
 
 ### Claude Code ###
 .claude/

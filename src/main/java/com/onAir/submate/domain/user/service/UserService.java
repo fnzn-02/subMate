@@ -1,8 +1,10 @@
 package com.onAir.submate.domain.user.service;
 
+import com.onAir.submate.domain.notification.repository.NotificationLogRepository;
 import com.onAir.submate.domain.subscription.repository.SubscriptionRepository;
 import com.onAir.submate.domain.user.dto.NicknameUpdateRequest;
 import com.onAir.submate.domain.user.dto.PasswordUpdateRequest;
+import com.onAir.submate.domain.user.dto.ProfileUpdateRequest;
 import com.onAir.submate.domain.user.dto.UserResponse;
 import com.onAir.submate.domain.user.entity.ThemeMode;
 import com.onAir.submate.domain.user.entity.User;
@@ -22,6 +24,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final NotificationLogRepository notificationLogRepository;
     private final PasswordEncoder passwordEncoder;
     private final FileStorageService fileStorageService;
 
@@ -62,6 +65,13 @@ public class UserService {
     }
 
     @Transactional
+    public UserResponse updateProfile(Long userId, ProfileUpdateRequest request) {
+        User user = getUser(userId);
+        user.updateProfile(request.job(), request.hobby());
+        return UserResponse.from(user);
+    }
+
+    @Transactional
     public UserResponse updateTheme(Long userId, ThemeMode themeMode) {
         User user = getUser(userId);
         user.updateThemeMode(themeMode);
@@ -69,10 +79,18 @@ public class UserService {
     }
 
     @Transactional
+    public void updateFcmToken(Long userId, String token) {
+        getUser(userId).updateFcmToken(token);
+    }
+
+    @Transactional
     public void withdraw(Long userId) {
         User user = getUser(userId);
 
-        // 구독 데이터 먼저 삭제
+        // 알림 로그 삭제 (FK 제약 때문에 구독 삭제 전에)
+        notificationLogRepository.deleteByUserId(userId);
+
+        // 구독 데이터 삭제
         subscriptionRepository.findByUserOrderBySortOrderAscCreatedAtAsc(user)
                 .forEach(subscriptionRepository::delete);
 

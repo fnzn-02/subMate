@@ -23,4 +23,10 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     // 대시보드: 사용자의 7일 이내 결제 예정 구독 조회
     List<Subscription> findByUserAndNextPaymentDateBetweenOrderByNextPaymentDateAsc(
             User user, LocalDate from, LocalDate to);
+
+    // 스케줄러: 결제일이 오늘 이전인 구독 (날짜 전진 대상)
+    List<Subscription> findByNextPaymentDateBefore(LocalDate date);
+
+    // 환율 업데이트: 달러 구독 전체 조회
+    List<Subscription> findByIsDollarTrue();
 }

@@ -2,6 +2,7 @@ package com.onAir.submate.domain.user.controller;
 
 import com.onAir.submate.domain.user.dto.NicknameUpdateRequest;
 import com.onAir.submate.domain.user.dto.PasswordUpdateRequest;
+import com.onAir.submate.domain.user.dto.ProfileUpdateRequest;
 import com.onAir.submate.domain.user.dto.UserResponse;
 import com.onAir.submate.domain.user.entity.ThemeMode;
 import com.onAir.submate.domain.user.service.UserService;
@@ -48,11 +49,24 @@ public class UserController {
         return ResponseEntity.ok(userService.uploadProfileImage(userId, file));
     }
 
+    @PutMapping("/profile")
+    public ResponseEntity<UserResponse> updateProfile(@Valid @RequestBody ProfileUpdateRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(userService.updateProfile(userId, request));
+    }
+
     @PutMapping("/theme")
     public ResponseEntity<UserResponse> updateTheme(@RequestBody Map<String, String> body) {
         Long userId = SecurityUtils.getCurrentUserId();
         ThemeMode themeMode = ThemeMode.valueOf(body.getOrDefault("themeMode", "LIGHT").toUpperCase());
         return ResponseEntity.ok(userService.updateTheme(userId, themeMode));
+    }
+
+    @PostMapping("/fcm-token")
+    public ResponseEntity<Void> updateFcmToken(@RequestBody Map<String, String> body) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        userService.updateFcmToken(userId, body.get("token"));
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping

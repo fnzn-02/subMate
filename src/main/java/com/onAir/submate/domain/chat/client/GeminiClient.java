@@ -35,12 +35,13 @@ public class GeminiClient {
                 ),
                 "generationConfig", Map.of(
                         "temperature", 0.7,
-                        "maxOutputTokens", 1024
+                        "maxOutputTokens", 1024,
+                        "thinkingConfig", Map.of("thinkingBudget", 0)
                 )
         );
 
         GeminiApiResponse response = restClient.post()
-                .uri("/{model}:generateContent?key={key}", model, apiKey)
+                .uri(b -> b.path("/{model}:generateContent").queryParam("key", apiKey).build(model))
                 .body(requestBody)
                 .retrieve()
                 .body(GeminiApiResponse.class);
@@ -71,12 +72,13 @@ public class GeminiClient {
                 ),
                 "generationConfig", Map.of(
                         "temperature", 0.1,
-                        "maxOutputTokens", 2048
+                        "maxOutputTokens", 2048,
+                        "thinkingConfig", Map.of("thinkingBudget", 0)
                 )
         );
 
         GeminiApiResponse response = restClient.post()
-                .uri("/{model}:generateContent?key={key}", model, apiKey)
+                .uri(b -> b.path("/{model}:generateContent").queryParam("key", apiKey).build(model))
                 .body(requestBody)
                 .retrieve()
                 .body(GeminiApiResponse.class);

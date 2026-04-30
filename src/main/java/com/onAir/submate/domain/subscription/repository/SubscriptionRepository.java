@@ -3,6 +3,8 @@ package com.onAir.submate.domain.subscription.repository;
 import com.onAir.submate.domain.subscription.entity.Subscription;
 import com.onAir.submate.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,4 +31,9 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
 
     // 환율 업데이트: 달러 구독 전체 조회
     List<Subscription> findByIsDollarTrue();
+
+    // 회원 탈퇴: 유저 구독 일괄 삭제
+    @Modifying
+    @Query("DELETE FROM Subscription s WHERE s.user = :user")
+    void deleteAllByUser(User user);
 }

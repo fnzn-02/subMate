@@ -90,9 +90,8 @@ public class UserService {
         // 알림 로그 삭제 (FK 제약 때문에 구독 삭제 전에)
         notificationLogRepository.deleteByUserId(userId);
 
-        // 구독 데이터 삭제
-        subscriptionRepository.findByUserOrderBySortOrderAscCreatedAtAsc(user)
-                .forEach(subscriptionRepository::delete);
+        // 구독 데이터 일괄 삭제
+        subscriptionRepository.deleteAllByUser(user);
 
         // 프로필 이미지 삭제
         fileStorageService.delete(user.getProfileImageUrl());

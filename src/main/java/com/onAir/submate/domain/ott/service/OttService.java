@@ -7,6 +7,7 @@ import com.onAir.submate.domain.ott.client.TmdbClient;
 import com.onAir.submate.domain.ott.dto.ContentWithProvidersDto;
 import com.onAir.submate.domain.ott.dto.OttContentDto;
 import com.onAir.submate.domain.ott.dto.WatchProviderDto;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -24,8 +26,18 @@ import java.util.concurrent.Executors;
 public class OttService {
 
     private final TmdbClient tmdbClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
+
+    @PreDestroy
+    public void shutdown() {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) executor.shutdownNow();
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+        }
+    }
 
     @Value("${tmdb.image-base-url}")
     private String imageBaseUrl;

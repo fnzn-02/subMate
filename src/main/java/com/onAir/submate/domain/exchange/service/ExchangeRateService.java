@@ -29,6 +29,8 @@ public class ExchangeRateService {
 
     private final ExchangeRateRepository exchangeRateRepository;
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Value("${koreaexim.api-key}")
     private String apiKey;
 
@@ -47,7 +49,6 @@ public class ExchangeRateService {
     @Transactional
     public void fetchAndSaveExchangeRate() {
         try {
-            ObjectMapper mapper = new ObjectMapper();
 
             // 오늘 데이터 없으면 최대 7일 전까지 재시도 (주말/공휴일 대비)
             for (int i = 0; i < 7; i++) {
@@ -75,7 +76,7 @@ public class ExchangeRateService {
                     continue;
                 }
 
-                List<Map<String, Object>> list = mapper.readValue(body, new TypeReference<>() {});
+                List<Map<String, Object>> list = objectMapper.readValue(body, new TypeReference<>() {});
                 if (list == null || list.isEmpty()) continue;
 
                 for (Map<String, Object> item : list) {

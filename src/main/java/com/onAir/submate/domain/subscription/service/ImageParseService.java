@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 public class ImageParseService {
 
     private final GeminiClient geminiClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String PARSE_PROMPT = """
             이 이미지는 구독 서비스 결제 관련 화면(영수증, 이메일, 앱 스크린샷 등)입니다.

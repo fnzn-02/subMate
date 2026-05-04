@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,6 +19,26 @@ import java.util.List;
 public class MonthlyReportController {
 
     private final MonthlyReportService monthlyReportService;
+
+    /**
+     * POST /api/reports/generate
+     * 이번 달 리포트 수동 생성
+     */
+    @PostMapping("/generate")
+    public ResponseEntity<MonthlyReportResponse> generateCurrentMonth() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(monthlyReportService.generateCurrentMonth(userId));
+    }
+
+    /**
+     * POST /api/reports/{yearMonth}/regenerate
+     * 특정 월 리포트 재생성
+     */
+    @PostMapping("/{yearMonth}/regenerate")
+    public ResponseEntity<MonthlyReportResponse> regenerate(@PathVariable String yearMonth) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(monthlyReportService.regenerateReport(userId, yearMonth));
+    }
 
     /**
      * GET /api/reports

@@ -79,6 +79,13 @@ public class ImageParseService {
             LocalDate nextPaymentDate = getDateOrNull(root, "nextPaymentDate");
             Category category = getCategoryOrDefault(root, "category");
 
+            // 결제일이 오늘 이하면 다음 주기로 이동
+            if (nextPaymentDate != null && !nextPaymentDate.isAfter(LocalDate.now())) {
+                nextPaymentDate = paymentCycle == PaymentCycle.YEARLY
+                        ? nextPaymentDate.plusYears(1)
+                        : nextPaymentDate.plusMonths(1);
+            }
+
             return new ParsedSubscriptionDto(
                     serviceName,
                     price,

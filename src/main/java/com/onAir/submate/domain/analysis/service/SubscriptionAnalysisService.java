@@ -37,7 +37,11 @@ public class SubscriptionAnalysisService {
         String prompt = buildAnalysisPrompt(user, subscriptions);
         String result = geminiClient.generate(prompt);
 
-        return new OptimizationResponse(result);
+        String[] parts = result.split("===DETAIL===", 2);
+        String summary = parts[0].trim();
+        String detail = parts.length > 1 ? parts[1].trim() : result;
+
+        return new OptimizationResponse(summary, detail);
     }
 
     private String buildAnalysisPrompt(User user, List<Subscription> subscriptions) {
@@ -88,7 +92,11 @@ public class SubscriptionAnalysisService {
                     totalMonthly.setScale(0, RoundingMode.HALF_UP).toPlainString()));
         }
 
-        sb.append("\n위 정보를 바탕으로 구체적이고 실용적인 최적화 분석을 제공해주세요.");
+        sb.append("\n위 정보를 바탕으로 구체적이고 실용적인 최적화 분석을 제공해주세요.\n\n");
+        sb.append("반드시 아래 형식을 지켜주세요:\n");
+        sb.append("1. 핵심 내용을 bullet point 3줄 이내로 요약하세요.\n");
+        sb.append("2. 요약 아래에 정확히 \"===DETAIL===\" 한 줄을 입력하세요.\n");
+        sb.append("3. 그 이후에 위 4가지 항목을 상세하게 작성하세요.");
 
         return sb.toString();
     }

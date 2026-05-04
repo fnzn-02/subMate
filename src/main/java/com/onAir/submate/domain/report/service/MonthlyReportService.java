@@ -108,6 +108,86 @@ public class MonthlyReportService {
     }
 
     /**
+     * 특정 월 리포트 재생성 (기존 삭제 후 새로 생성)
+     */
+    @Transactional
+    public MonthlyReportResponse regenerateReport(Long userId, String yearMonth) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        monthlyReportRepository.findByUserIdAndYearMonth(userId, yearMonth)
+                .ifPresent(monthlyReportRepository::delete);
+        monthlyReportRepository.flush();
+
+        List<Subscription> subscriptions =
+                subscriptionRepository.findByUserOrderBySortOrderAscCreatedAtAsc(user);
+
+        if (subscriptions.isEmpty()) throw new CustomException(ErrorCode.REPORT_NOT_FOUND);
+
+        BigDecimal totalMonthly = calcTotalMonthly(subscriptions);
+        String prompt = buildReportPrompt(user, subscriptions, totalMonthly, yearMonth);
+
+        String content;
+        try {
+            content = geminiClient.generate(prompt);
+        } catch (Exception e) {
+            log.error("Gemini 리포트 재생성 실패 - userId={}", userId, e);
+            content = buildFallbackReport(subscriptions, totalMonthly, yearMonth);
+        }
+
+        MonthlyReport report = MonthlyReport.builder()
+                .user(user).yearMonth(yearMonth).content(content)
+                .totalAmount(totalMonthly).savedAmount(BigDecimal.ZERO).build();
+
+        return MonthlyReportResponse.from(monthlyReportRepository.save(report));
+    }
+
+    /**
+     * 현재 달 리포트 수동 생성 (이미 있으면 기존 반환)
+     */
+    @Transactional
+    public MonthlyReportResponse generateCurrentMonth(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String yearMonth = YearMonth.now().toString();
+
+        Optional<MonthlyReport> existing = monthlyReportRepository.findByUserIdAndYearMonth(userId, yearMonth);
+        if (existing.isPresent()) {
+            return MonthlyReportResponse.from(existing.get());
+        }
+
+        List<Subscription> subscriptions =
+                subscriptionRepository.findByUserOrderBySortOrderAscCreatedAtAsc(user);
+
+        if (subscriptions.isEmpty()) {
+            throw new CustomException(ErrorCode.REPORT_NOT_FOUND);
+        }
+
+        BigDecimal totalMonthly = calcTotalMonthly(subscriptions);
+        String prompt = buildReportPrompt(user, subscriptions, totalMonthly, yearMonth);
+
+        String content;
+        try {
+            content = geminiClient.generate(prompt);
+        } catch (Exception e) {
+            log.error("Gemini 리포트 생성 실패 - userId={}", userId, e);
+            content = buildFallbackReport(subscriptions, totalMonthly, yearMonth);
+        }
+
+        MonthlyReport report = MonthlyReport.builder()
+                .user(user)
+                .yearMonth(yearMonth)
+                .content(content)
+                .totalAmount(totalMonthly)
+                .savedAmount(BigDecimal.ZERO)
+                .build();
+
+        monthlyReportRepository.save(report);
+        return MonthlyReportResponse.from(report);
+    }
+
+    /**
      * 내 리포트 목록 조회
      */
     @Transactional(readOnly = true)
@@ -174,11 +254,15 @@ public class MonthlyReportService {
         sb.append(String.format("\n**총 월 지출: 약 %s원**\n\n",
                 totalMonthly.setScale(0, RoundingMode.HALF_UP).toPlainString()));
 
-        sb.append("위 내용을 바탕으로 다음을 포함한 월간 리포트를 작성해주세요:\n");
-        sb.append("1. **이달의 구독 요약** - 총 지출, 카테고리별 비중\n");
-        sb.append("2. **주목할 점** - 무료체험 만료 임박, 비용이 큰 구독 등\n");
-        sb.append("3. **절약 팁** - 구체적인 절약 방법 2~3가지\n");
-        sb.append("4. **다음 달 예상** - 결제 예정 금액 안내\n");
+        sb.append("위 내용을 바탕으로 월간 리포트를 작성해주세요.\n\n");
+        sb.append("반드시 아래 형식을 지켜주세요:\n");
+        sb.append("1. 핵심 내용을 bullet point 3줄 이내로 요약하세요.\n");
+        sb.append("2. 요약 아래에 정확히 \"===DETAIL===\" 한 줄을 입력하세요.\n");
+        sb.append("3. 그 이후에 아래 4가지를 상세하게 작성하세요:\n");
+        sb.append("   - **이달의 구독 요약** - 총 지출, 카테고리별 비중\n");
+        sb.append("   - **주목할 점** - 무료체험 만료 임박, 비용이 큰 구독 등\n");
+        sb.append("   - **절약 팁** - 구체적인 절약 방법 2~3가지\n");
+        sb.append("   - **다음 달 예상** - 결제 예정 금액 안내\n");
         sb.append("친근하고 격려하는 톤으로 작성해주세요.");
 
         return sb.toString();

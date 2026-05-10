@@ -105,5 +105,6 @@ public class Subscription {
         } else if (paymentCycle == PaymentCycle.YEARLY) {
             this.nextPaymentDate = this.nextPaymentDate.plusYears(1);
         }
+        this.isFreeTrial = false;
     }
 }

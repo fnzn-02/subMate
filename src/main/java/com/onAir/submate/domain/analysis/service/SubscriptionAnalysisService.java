@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,11 +38,14 @@ public class SubscriptionAnalysisService {
         String prompt = buildAnalysisPrompt(user, subscriptions);
         String result = geminiClient.generate(prompt);
 
-        String[] parts = result.split("===DETAIL===", 2);
-        String summary = parts[0].trim();
-        String detail = parts.length > 1 ? parts[1].trim() : result;
+        List<OptimizationResponse.StatCard> cards = parseCards(result);
+        String withoutCards = result.replaceAll("(?s)\\[CARDS\\].*?\\[/CARDS\\]", "").trim();
 
-        return new OptimizationResponse(summary, detail);
+        String[] parts = withoutCards.split("===DETAIL===", 2);
+        String summary = parts[0].trim();
+        String detail = parts.length > 1 ? parts[1].trim() : withoutCards;
+
+        return new OptimizationResponse(cards, summary, detail);
     }
 
     private String buildAnalysisPrompt(User user, List<Subscription> subscriptions) {
@@ -93,12 +97,34 @@ public class SubscriptionAnalysisService {
         }
 
         sb.append("\n위 정보를 바탕으로 구체적이고 실용적인 최적화 분석을 제공해주세요.\n\n");
-        sb.append("반드시 아래 형식을 지켜주세요:\n");
-        sb.append("1. 핵심 내용을 bullet point 3줄 이내로 요약하세요.\n");
-        sb.append("2. 요약 아래에 정확히 \"===DETAIL===\" 한 줄을 입력하세요.\n");
-        sb.append("3. 그 이후에 위 4가지 항목을 상세하게 작성하세요.");
+        sb.append("반드시 아래 형식을 정확히 지켜주세요:\n");
+        sb.append("1. 맨 처음에 핵심 수치 3개를 아래 형식으로 작성하세요:\n");
+        sb.append("[CARDS]\n");
+        sb.append("총 월 지출|₩XX,XXX|wallet\n");
+        sb.append("절약 가능 금액|₩X,XXX|trending_down\n");
+        sb.append("주의 구독|X건|warning\n");
+        sb.append("[/CARDS]\n");
+        sb.append("2. 그 아래에 핵심 내용을 bullet point 3줄 이내로 요약하세요.\n");
+        sb.append("3. 요약 아래에 정확히 \"===DETAIL===\" 한 줄을 입력하세요.\n");
+        sb.append("4. 그 이후에 위 4가지 항목을 상세하게 작성하세요.");
 
         return sb.toString();
+    }
+
+    private List<OptimizationResponse.StatCard> parseCards(String result) {
+        List<OptimizationResponse.StatCard> cards = new ArrayList<>();
+        int start = result.indexOf("[CARDS]");
+        int end = result.indexOf("[/CARDS]");
+        if (start == -1 || end == -1) return cards;
+
+        String block = result.substring(start + 7, end).trim();
+        for (String line : block.split("\n")) {
+            String[] parts = line.trim().split("\\|");
+            if (parts.length == 3) {
+                cards.add(new OptimizationResponse.StatCard(parts[0].trim(), parts[1].trim(), parts[2].trim()));
+            }
+        }
+        return cards;
     }
 
     private BigDecimal toMonthlyPrice(Subscription s) {

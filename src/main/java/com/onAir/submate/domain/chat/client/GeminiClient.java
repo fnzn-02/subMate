@@ -27,6 +27,10 @@ public class GeminiClient {
     }
 
     public String generate(String prompt) {
+        return generate(prompt, 1024);
+    }
+
+    public String generate(String prompt, int maxOutputTokens) {
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
                         Map.of("parts", List.of(
@@ -35,7 +39,7 @@ public class GeminiClient {
                 ),
                 "generationConfig", Map.of(
                         "temperature", 0.7,
-                        "maxOutputTokens", 1024,
+                        "maxOutputTokens", maxOutputTokens,
                         "thinkingConfig", Map.of("thinkingBudget", 0)
                 )
         );

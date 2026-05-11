@@ -60,7 +60,7 @@ public class MonthlyReportService {
 
         String content;
         try {
-            content = geminiClient.generate(prompt);
+            content = geminiClient.generate(prompt, 2048);
         } catch (Exception e) {
             log.error("Gemini 리포트 생성 실패 - userId={}", user.getId(), e);
             content = buildFallbackReport(subscriptions, totalMonthly, yearMonth);
@@ -129,7 +129,7 @@ public class MonthlyReportService {
 
         String content;
         try {
-            content = geminiClient.generate(prompt);
+            content = geminiClient.generate(prompt, 2048);
         } catch (Exception e) {
             log.error("Gemini 리포트 재생성 실패 - userId={}", userId, e);
             content = buildFallbackReport(subscriptions, totalMonthly, yearMonth);
@@ -169,7 +169,7 @@ public class MonthlyReportService {
 
         String content;
         try {
-            content = geminiClient.generate(prompt);
+            content = geminiClient.generate(prompt, 2048);
         } catch (Exception e) {
             log.error("Gemini 리포트 생성 실패 - userId={}", userId, e);
             content = buildFallbackReport(subscriptions, totalMonthly, yearMonth);
@@ -255,10 +255,16 @@ public class MonthlyReportService {
                 totalMonthly.setScale(0, RoundingMode.HALF_UP).toPlainString()));
 
         sb.append("위 내용을 바탕으로 월간 리포트를 작성해주세요.\n\n");
-        sb.append("반드시 아래 형식을 지켜주세요:\n");
-        sb.append("1. 핵심 내용을 bullet point 3줄 이내로 요약하세요.\n");
-        sb.append("2. 요약 아래에 정확히 \"===DETAIL===\" 한 줄을 입력하세요.\n");
-        sb.append("3. 그 이후에 아래 4가지를 상세하게 작성하세요:\n");
+        sb.append("반드시 아래 형식을 정확히 지켜주세요:\n");
+        sb.append("1. 맨 처음에 핵심 수치 3개를 아래 형식으로 작성하세요:\n");
+        sb.append("[CARDS]\n");
+        sb.append("총 월 지출|₩XX,XXX|wallet\n");
+        sb.append("가장 많은 지출|카테고리명|category\n");
+        sb.append("절약 팁|X가지|lightbulb\n");
+        sb.append("[/CARDS]\n");
+        sb.append("2. 그 아래에 핵심 내용을 bullet point 3줄 이내로 요약하세요.\n");
+        sb.append("3. 요약 아래에 정확히 \"===DETAIL===\" 한 줄을 입력하세요.\n");
+        sb.append("4. 그 이후에 아래 4가지를 상세하게 작성하세요:\n");
         sb.append("   - **이달의 구독 요약** - 총 지출, 카테고리별 비중\n");
         sb.append("   - **주목할 점** - 무료체험 만료 임박, 비용이 큰 구독 등\n");
         sb.append("   - **절약 팁** - 구체적인 절약 방법 2~3가지\n");

@@ -16,7 +16,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // /uploads/profiles/** → 로컬 디렉토리 파일 서빙
         registry.addResourceHandler(profileUrlPrefix + "/**")
                 .addResourceLocations("file:" + uploadDir + "/");
     }

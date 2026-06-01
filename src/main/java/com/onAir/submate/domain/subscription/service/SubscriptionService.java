@@ -41,7 +41,7 @@ public class SubscriptionService {
                 .price(price)
                 .originalPrice(request.isDollar() ? request.price() : null)
                 .paymentCycle(request.paymentCycle())
-                .nextPaymentDate(request.nextPaymentDate())
+                .nextPaymentDate(advanceToFuture(request.nextPaymentDate(), request.paymentCycle()))
                 .isFreeTrial(request.isFreeTrial())
                 .isDollar(request.isDollar())
                 .category(request.category())
@@ -79,7 +79,7 @@ public class SubscriptionService {
                 updatedPrice,
                 request.isDollar() ? request.price() : null,
                 request.paymentCycle(),
-                request.nextPaymentDate(),
+                advanceToFuture(request.nextPaymentDate(), request.paymentCycle()),
                 request.isFreeTrial(),
                 request.isDollar(),
                 request.category(),
@@ -117,5 +117,16 @@ public class SubscriptionService {
     private User getUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private java.time.LocalDate advanceToFuture(java.time.LocalDate date, com.onAir.submate.domain.subscription.entity.PaymentCycle cycle) {
+        if (date == null) return date;
+        java.time.LocalDate today = java.time.LocalDate.now();
+        while (!date.isAfter(today)) {
+            date = cycle == com.onAir.submate.domain.subscription.entity.PaymentCycle.YEARLY
+                    ? date.plusYears(1)
+                    : date.plusMonths(1);
+        }
+        return date;
     }
 }

@@ -16,7 +16,7 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
 
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
     private static final java.util.Set<String> ALLOWED_TYPES =
             java.util.Set.of("image/jpeg", "image/png", "image/webp");
 

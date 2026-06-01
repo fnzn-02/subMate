@@ -66,9 +66,26 @@ public class DashboardService {
 
     private List<UpcomingPayment> getUpcomingPayments(User user, LocalDate today) {
         LocalDate sevenDaysLater = today.plusDays(7);
-        return subscriptionRepository
+        List<UpcomingPayment> upcoming = subscriptionRepository
                 .findByUserAndNextPaymentDateBetweenOrderByNextPaymentDateAsc(user, today, sevenDaysLater)
                 .stream()
+                .map(s -> new UpcomingPayment(
+                        s.getId(),
+                        s.getServiceName(),
+                        s.getPrice(),
+                        s.getNextPaymentDate(),
+                        (int) ChronoUnit.DAYS.between(today, s.getNextPaymentDate()),
+                        s.isFreeTrial()
+                ))
+                .toList();
+
+        if (!upcoming.isEmpty()) return upcoming;
+
+        // 7일 내 결제 없으면 가장 가까운 결제 1건 표시
+        return subscriptionRepository
+                .findByUserAndNextPaymentDateAfterOrderByNextPaymentDateAsc(user, today)
+                .stream()
+                .limit(1)
                 .map(s -> new UpcomingPayment(
                         s.getId(),
                         s.getServiceName(),

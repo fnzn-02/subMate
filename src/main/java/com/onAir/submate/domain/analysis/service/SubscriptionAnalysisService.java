@@ -36,7 +36,7 @@ public class SubscriptionAnalysisService {
                 subscriptionRepository.findByUserOrderBySortOrderAscCreatedAtAsc(user);
 
         String prompt = buildAnalysisPrompt(user, subscriptions);
-        String result = geminiClient.generate(prompt);
+        String result = geminiClient.generate(prompt, 3000);
 
         List<OptimizationResponse.StatCard> cards = parseCards(result);
         String withoutCards = result.replaceAll("(?s)\\[CARDS\\].*?\\[/CARDS\\]", "").trim();
@@ -106,7 +106,12 @@ public class SubscriptionAnalysisService {
         sb.append("[/CARDS]\n");
         sb.append("2. 그 아래에 핵심 내용을 bullet point 3줄 이내로 요약하세요.\n");
         sb.append("3. 요약 아래에 정확히 \"===DETAIL===\" 한 줄을 입력하세요.\n");
-        sb.append("4. 그 이후에 위 4가지 항목을 상세하게 작성하세요.");
+        sb.append("4. 그 이후에 위 4가지 항목을 작성하되, 아래 길이 제한을 반드시 지키세요:\n");
+        sb.append("   - 각 항목 제목은 한 줄\n");
+        sb.append("   - 각 항목 내용은 3줄 이내\n");
+        sb.append("   - 전체 상세 내용은 400자를 넘지 마세요\n");
+        sb.append("   - 마크다운 기호(**, ##, - 등) 없이 일반 텍스트로 작성하세요\n");
+        sb.append("   - 불필요한 설명 없이 핵심만 간결하게 작성하세요");
 
         return sb.toString();
     }

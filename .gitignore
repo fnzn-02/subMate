@@ -39,6 +39,7 @@ out/
 application-local.yml
 application-prod.yml
 firebase-service-account.json
+deploy.sh
 .DS_Store
 
 ### Claude Code ###

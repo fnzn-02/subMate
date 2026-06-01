@@ -176,20 +176,6 @@ spring:
 
 ---
 
-## 팀 소개
-
-**Team Onair — 연성대학교 캡스톤디자인 2026**
-
-| 이름 | 역할 |
-|------|------|
-| 전대향 | 팀장 · Backend |
-| 김대호 | Database |
-| 김한성 | Frontend (Flutter) |
-| 전재우 | Research · 발표 |
-| 김건 | Design · PPT |
-
----
-
 ## 보안 안내
 
 - `application-local.yml`, `application-prod.yml`, `firebase-service-account.json`, `deploy.sh` — `.gitignore` 처리

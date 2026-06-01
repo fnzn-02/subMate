@@ -69,6 +69,12 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
+    @DeleteMapping("/profile-image")
+    public ResponseEntity<UserResponse> deleteProfileImage() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        return ResponseEntity.ok(userService.deleteProfileImage(userId));
+    }
+
     @DeleteMapping
     public ResponseEntity<Void> withdraw() {
         Long userId = SecurityUtils.getCurrentUserId();

@@ -65,6 +65,14 @@ public class UserService {
     }
 
     @Transactional
+    public UserResponse deleteProfileImage(Long userId) {
+        User user = getUser(userId);
+        fileStorageService.delete(user.getProfileImageUrl());
+        user.updateProfileImageUrl(null);
+        return UserResponse.from(user);
+    }
+
+    @Transactional
     public UserResponse updateProfile(Long userId, ProfileUpdateRequest request) {
         User user = getUser(userId);
         user.updateProfile(request.job(), request.hobby());

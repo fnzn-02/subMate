@@ -3,9 +3,9 @@
 > 흩어진 구독을 한 곳에서, AI가 똑똑하게 관리합니다.
 
 [![Java](https://img.shields.io/badge/Java-17-007396?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.4-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
-[![AWS](https://img.shields.io/badge/AWS-EC2%20%7C%20RDS%20%7C%20S3-FF9900?style=flat-square&logo=amazonaws&logoColor=white)](https://aws.amazon.com/)
+[![AWS](https://img.shields.io/badge/AWS-EC2%20%7C%20RDS-FF9900?style=flat-square&logo=amazonaws&logoColor=white)](https://aws.amazon.com/)
 [![Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-4285F4?style=flat-square&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
 
 **연성대학교 캡스톤디자인 2026 — Team Onair**
@@ -37,7 +37,7 @@ Flutter 앱 레포지토리: [submate_app](https://github.com/fnzn-02/submate_ap
 | AI 분석 리포트 | 매월 자동 생성되는 구독 분석 리포트 (요약·상세·월간) |
 | OTT 통합 검색 | TMDB 연동 4만+ 콘텐츠, 내 구독 OTT 매칭 표시 |
 | 환율 자동 환산 | USD 구독을 실시간 환율 기준 원화로 자동 변환 |
-| 결제 알림 | FCM 기반 결제 D-7·D-3·D-0 푸시, 무료체험 만료 알림 |
+| 결제 알림 | FCM 기반 결제 D-3·D-1 푸시, 무료체험 만료 알림 |
 | 이메일 알림 | Spring Batch 기반 결제 임박 이메일 발송 |
 | 마이페이지 | 프로필 이미지, 닉네임·비밀번호 변경, 테마 설정, 회원 탈퇴 |
 
@@ -57,8 +57,7 @@ Flutter 앱 레포지토리: [submate_app](https://github.com/fnzn-02/submate_ap
 ### Infrastructure (AWS)
 - **Server**: EC2 (Ubuntu 24.04)
 - **Database**: RDS MySQL 8.0
-- **Storage**: S3 (파일 저장)
-- **Serverless**: Lambda
+- **Storage**: EC2 로컬 파일 저장 (프로필 이미지)
 
 ---
 
@@ -81,6 +80,7 @@ src/main/java/com/onAir/submate/
     ├── batch/         # 이메일 알림 스케줄러
     ├── config/        # Firebase, CORS, RestClient 설정
     ├── exception/     # 전역 예외 처리
+    ├── infra/         # FCM, 파일 저장 서비스
     ├── mail/          # 이메일 발송
     └── security/      # JWT 필터, Security 설정
 ```
@@ -167,7 +167,7 @@ spring:
 | POST | `/api/auth/email/send-code` | 이메일 인증코드 발송 |
 | GET | `/api/subscriptions` | 구독 목록 조회 |
 | POST | `/api/subscriptions` | 구독 추가 |
-| POST | `/api/subscriptions/ocr` | OCR 구독 자동 등록 |
+| POST | `/api/subscriptions/parse-image` | 이미지 기반 구독 자동 등록 |
 | GET | `/api/dashboard` | 대시보드 통계 |
 | POST | `/api/chat` | AI 어시스턴트 대화 |
 | GET | `/api/analysis` | AI 분석 리포트 |

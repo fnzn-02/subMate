@@ -56,10 +56,26 @@ public class ImageParseService {
         Map.entry("naver", "네이버플러스 멤버십")
     );
 
+    private static final java.util.List<String> KNOWN_SERVICES = java.util.List.of(
+        "Claude", "ChatGPT", "Gemini", "넷플릭스", "스포티파이", "디즈니+",
+        "티빙", "왓챠", "웨이브", "유튜브 프리미엄", "Apple Music",
+        "멜론", "벅스", "FLO", "지니뮤직", "노션", "듀오링고",
+        "쿠팡 로켓와우", "배달의민족", "구글 드라이브", "OneDrive",
+        "밀리의서재", "리디북스", "네이버플러스 멤버십"
+    );
+
     private String normalizeServiceName(String name) {
         if (name == null) return null;
-        String normalized = BILLING_NAME_MAP.get(name.toLowerCase().trim());
-        return normalized != null ? normalized : name;
+        // 1. 청구명 → 서비스명 매핑 테이블
+        String mapped = BILLING_NAME_MAP.get(name.toLowerCase().trim());
+        if (mapped != null) return mapped;
+        // 2. "Claude Pro", "ChatGPT Plus" 등 플랜명 제거
+        for (String service : KNOWN_SERVICES) {
+            if (name.toLowerCase().startsWith(service.toLowerCase())) {
+                return service;
+            }
+        }
+        return name;
     }
 
     private static final String PARSE_PROMPT = """
@@ -79,6 +95,7 @@ public class ImageParseService {
             - 날짜가 이미지에 없으면 nextPaymentDate를 null로 설정하세요.
             - 반드시 JSON만 출력하고 마크다운 코드블록(```)을 사용하지 마세요.
             - serviceName은 청구사명이 아닌 실제 서비스 제품명으로 반환하세요. 예: Anthropic → Claude, OpenAI → ChatGPT, Spotify AB → 스포티파이
+            - serviceName은 플랜·등급명을 제외한 기본 서비스명만 반환하세요. 예: Claude Pro → Claude, ChatGPT Plus → ChatGPT, Gemini Advanced → Gemini, YouTube Premium → 유튜브 프리미엄
             """;
 
     public ParsedSubscriptionDto parseImage(MultipartFile file) {

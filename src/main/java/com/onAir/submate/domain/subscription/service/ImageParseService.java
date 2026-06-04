@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +29,38 @@ public class ImageParseService {
 
     private final GeminiClient geminiClient;
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    private static final Map<String, String> BILLING_NAME_MAP = Map.ofEntries(
+        Map.entry("anthropic", "Claude"),
+        Map.entry("openai", "ChatGPT"),
+        Map.entry("spotify ab", "스포티파이"),
+        Map.entry("spotify korea", "스포티파이"),
+        Map.entry("netflix", "넷플릭스"),
+        Map.entry("disney plus", "디즈니+"),
+        Map.entry("disney+", "디즈니+"),
+        Map.entry("tving", "티빙"),
+        Map.entry("watcha", "왓챠"),
+        Map.entry("wavve", "웨이브"),
+        Map.entry("melon", "멜론"),
+        Map.entry("bugs", "벅스"),
+        Map.entry("genie", "지니뮤직"),
+        Map.entry("coupang", "쿠팡 로켓와우"),
+        Map.entry("woowa brothers", "배달의민족"),
+        Map.entry("baemin", "배달의민족"),
+        Map.entry("notion labs", "노션"),
+        Map.entry("notion", "노션"),
+        Map.entry("duolingo", "듀오링고"),
+        Map.entry("ridi", "리디북스"),
+        Map.entry("millie", "밀리의서재"),
+        Map.entry("microsoft", "OneDrive"),
+        Map.entry("naver", "네이버플러스 멤버십")
+    );
+
+    private String normalizeServiceName(String name) {
+        if (name == null) return null;
+        String normalized = BILLING_NAME_MAP.get(name.toLowerCase().trim());
+        return normalized != null ? normalized : name;
+    }
 
     private static final String PARSE_PROMPT = """
             이 이미지는 구독 서비스 결제 관련 화면(영수증, 이메일, 앱 스크린샷 등)입니다.
@@ -45,6 +78,7 @@ public class ImageParseService {
             - 정보를 확인할 수 없는 필드는 null로 설정하세요.
             - 날짜가 이미지에 없으면 nextPaymentDate를 null로 설정하세요.
             - 반드시 JSON만 출력하고 마크다운 코드블록(```)을 사용하지 마세요.
+            - serviceName은 청구사명이 아닌 실제 서비스 제품명으로 반환하세요. 예: Anthropic → Claude, OpenAI → ChatGPT, Spotify AB → 스포티파이
             """;
 
     public ParsedSubscriptionDto parseImage(MultipartFile file) {
@@ -72,7 +106,7 @@ public class ImageParseService {
         try {
             JsonNode root = objectMapper.readTree(json);
 
-            String serviceName = getTextOrNull(root, "serviceName");
+            String serviceName = normalizeServiceName(getTextOrNull(root, "serviceName"));
             BigDecimal price = getPriceOrNull(root, "price");
             String currency = getTextOrNull(root, "currency");
             PaymentCycle paymentCycle = getPaymentCycleOrDefault(root, "paymentCycle");

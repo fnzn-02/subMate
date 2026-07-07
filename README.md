@@ -53,6 +53,7 @@ Flutter 앱 레포지토리: [submate_app](https://github.com/fnzn-02/submate_ap
 - **Mail**: Brevo SMTP API
 - **AI**: Google Gemini 2.5 Flash API
 - **Build**: Gradle
+- **Dev Tools**: Claude Code (AI 코딩 도구 활용)
 
 ### Infrastructure (AWS)
 - **Server**: EC2 (Ubuntu 24.04)

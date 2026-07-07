@@ -49,7 +49,7 @@ Flutter 앱 레포지토리: [submate_app](https://github.com/fnzn-02/submate_ap
 - **Framework**: Spring Boot 3.x, Java 17
 - **ORM**: Spring Data JPA, Hibernate
 - **Security**: Spring Security, JWT (jjwt 0.12.6)
-- **Batch**: Spring Batch (결제 알림 스케줄링)
+- **Batch**: @Scheduled (결제 알림 스케줄링)
 - **Mail**: Brevo SMTP API
 - **AI**: Google Gemini 2.5 Flash API
 - **Build**: Gradle

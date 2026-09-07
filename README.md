@@ -25,6 +25,18 @@ Flutter 앱 레포지토리: [submate_app](https://github.com/fnzn-02/submate_ap
 
 ---
 
+## 스크린샷
+
+| 대시보드 | 구독 목록 | AI 분석 |
+|:---:|:---:|:---:|
+| <img src="docs/images/dashboard.png" width="220"/> | <img src="docs/images/subscriptions.png" width="220"/> | <img src="docs/images/analysis.png" width="220"/> |
+
+| AI 어시스턴트 | 구독 추가 (OCR) | OTT 통합 검색 |
+|:---:|:---:|:---:|
+| <img src="docs/images/ai-chat.png" width="220"/> | <img src="docs/images/add-subscription.png" width="220"/> | <img src="docs/images/ott-search.png" width="220"/> |
+
+---
+
 ## 주요 기능
 
 | 기능 | 설명 |

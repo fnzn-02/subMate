@@ -58,10 +58,10 @@ Flutter 앱 레포지토리: [submate_app](https://github.com/fnzn-02/submate_ap
 ## 기술 스택
 
 ### Backend
-- **Framework**: Spring Boot 3.x, Java 17
+- **Framework**: Spring Boot 4.0.4, Java 17
 - **ORM**: Spring Data JPA, Hibernate
 - **Security**: Spring Security, JWT (jjwt 0.12.6)
-- **Batch**: @Scheduled (결제 알림 스케줄링)
+- **Scheduler**: Spring @Scheduled (결제 알림, 월간 리포트 자동화)
 - **Mail**: Brevo SMTP API
 - **AI**: Google Gemini 2.5 Flash API
 - **Build**: Gradle
